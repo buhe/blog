@@ -5,6 +5,7 @@ pubDate: 'Jul 08 2026'
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[英文](https://blog.buhe.dev/blog/archome/help/)
 # Archrome 使用帮助
 
 Archrome 是一款灵感来自 Arc 浏览器的 Chrome 扩展，用**书签文件夹**管理浏览器「空间」，把工作、学习、生活等场景分开。

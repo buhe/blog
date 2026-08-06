@@ -5,6 +5,7 @@ pubDate: 'Jul 08 2026'
 heroImage: '../../../assets/blog-placeholder-3.jpg'
 ---
 
+[简体中文](https://blog.buhe.dev/blog/archome/help_cn/)
 # Archrome Help
 
 Archrome is an Arc browser–inspired Chrome extension that manages browser **spaces** with **bookmark folders**, so you can keep work, study, personal, and other contexts separate.
