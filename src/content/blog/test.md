@@ -1,6 +1,8 @@
 ---
-layout: ../layouts/Layout.astro
-title: 我的第一篇博客
+title: 'First post bububu'
+description: 'Lorem ipsum dolor sit amet'
+pubDate: 'Jul 08 2022'
+heroImage: '../../assets/blog-placeholder-3.jpg'
 ---
 # 标题测试
 
