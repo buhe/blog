@@ -2,7 +2,7 @@
 title: '帮助'
 description: 'Archome help'
 pubDate: 'Jul 08 2026'
-heroImage: '../../../assets/blog-placeholder-3.jpg'
+heroImage: '../../../assets/blog-placeholder-2.jpg'
 ---
 
 [English](https://blog.buhe.dev/blog/archome/help/)
