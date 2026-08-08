@@ -5,8 +5,6 @@ pubDate: 'Aug 07 2026'
 heroImage: '../../../assets/gemini_1.jpg'
 ---
 
-# Privacy Policy
-
 **1. We comply with the Act on the Protection of Personal Information and related laws and regulations in World and engage in the appropriate acquisition, use and provision of personal information in accordance with the below disclosed Handling of Personal Information and internal regulations, etc.**
 
 **2. We strive to prevent personal information we handle from being leaked, lost, or damaged by taking necessary and proper security measures, and we take necessary corrective measures in the event that an incident occurs.**
