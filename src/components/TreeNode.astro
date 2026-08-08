@@ -1,0 +1,96 @@
+---
+// src/components/TreeNode.astro
+import TreeNode from "./TreeNode.astro";
+
+interface Props {
+    node: any;
+}
+
+const { node } = Astro.props;
+---
+
+<li class="tree-node">
+    {
+        node.isFolder ? (
+            <details open class="folder-details">
+                <summary class="folder-title">
+                    <span class="icon">📁</span>
+                    <span class="folder-name">{node.name}</span>
+                </summary>
+                <ul class="tree-children">
+                    {node.children.map((child: any) => (
+                        <TreeNode node={child} />
+                    ))}
+                </ul>
+            </details>
+        ) : (
+            <a href={`/blog/${node.data.id}`} class="file-link">
+                <span class="icon">📄</span>
+                <span class="file-title">{node.name}</span>
+                {node.data.data.pubDate && (
+                    <time class="pub-date">
+                        {
+                            new Date(node.data.data.pubDate)
+                                .toISOString()
+                                .split("T")[0]
+                        }
+                    </time>
+                )}
+            </a>
+        )
+    }
+</li>
+
+<style>
+    .tree-node {
+        list-style: none;
+        margin: 6px 0;
+    }
+    .folder-details {
+        margin-left: 4px;
+    }
+    .folder-title {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        color: #2d3748;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    .folder-title:hover {
+        background-color: #f7fafc;
+    }
+    .tree-children {
+        list-style: none;
+        padding-left: 1.25rem;
+        margin: 4px 0 4px 8px;
+        border-left: 2px dashed #e2e8f0;
+    }
+    .file-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #4a5568;
+        font-size: 0.95rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+    }
+    .file-link:hover {
+        background-color: #ebf8ff;
+        color: #3182ce;
+    }
+    .pub-date {
+        font-size: 0.8rem;
+        color: #a0aec0;
+        margin-left: 8px;
+    }
+    .icon {
+        font-size: 0.9rem;
+    }
+</style>
