@@ -36,6 +36,9 @@ const blogTree = buildBlogTree(allPosts);
 
 <style>
 	.tree-container {
+		/* override global `main { width: 720px }` which forces horizontal overflow on mobile */
+		width: auto;
+		box-sizing: border-box;
 		max-width: 800px;
 		margin: 0 auto;
 		padding: 3rem 1.5rem;
