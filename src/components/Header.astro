@@ -68,9 +68,26 @@ import HeaderLink from './HeaderLink.astro';
 	.social-links a {
 		display: flex;
 	}
+	.social-links a {
+		padding: 0.75em 0.4em;
+	}
 	@media (max-width: 720px) {
-		.social-links {
-			display: none;
+		header {
+			padding: 0 0.5em;
+		}
+		nav {
+			flex-wrap: wrap;
+		}
+		nav h2 {
+			width: 100%;
+			text-align: center;
+		}
+		nav a {
+			padding: 0.75em 0.6em;
+		}
+		.social-links a svg {
+			width: 24px;
+			height: 24px;
 		}
 	}
 </style>

@@ -49,17 +49,36 @@ const { node } = Astro.props;
     .folder-details {
         margin-left: 4px;
     }
+    .folder-details[open] > .folder-title {
+        border-radius: 4px;
+    }
     .folder-title {
         cursor: pointer;
         font-weight: 600;
         font-size: 1rem;
         color: #2d3748;
         user-select: none;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 8px;
-        padding: 4px 8px;
+        padding: 8px;
         border-radius: 4px;
+        min-height: 44px;
+        box-sizing: border-box;
+        list-style: none;
+    }
+    .folder-title::-webkit-details-marker {
+        display: none;
+    }
+    .folder-title::after {
+        content: "▾";
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: #a0aec0;
+        transition: transform 0.15s ease;
+    }
+    .folder-details:not([open]) .folder-title::after {
+        transform: rotate(-90deg);
     }
     .folder-title:hover {
         background-color: #f7fafc;
@@ -71,13 +90,15 @@ const { node } = Astro.props;
         border-left: 2px dashed #e2e8f0;
     }
     .file-link {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 8px;
         text-decoration: none;
         color: #4a5568;
         font-size: 0.95rem;
-        padding: 4px 8px;
+        padding: 8px;
+        min-height: 44px;
+        box-sizing: border-box;
         border-radius: 4px;
         transition: all 0.15s ease;
     }
@@ -85,12 +106,30 @@ const { node } = Astro.props;
         background-color: #ebf8ff;
         color: #3182ce;
     }
+    .file-link:active,
+    .folder-title:active {
+        background-color: #ebf8ff;
+    }
+    .file-title {
+        flex: 1;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
     .pub-date {
         font-size: 0.8rem;
         color: #a0aec0;
         margin-left: 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
     .icon {
         font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    @media (max-width: 720px) {
+        .tree-children {
+            padding-left: 0.75rem;
+            margin-left: 4px;
+        }
     }
 </style>
