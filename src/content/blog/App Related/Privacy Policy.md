@@ -2,7 +2,7 @@
 title: 'Privacy Policy'
 description: 'Privacy Policy'
 pubDate: 'Aug 07 2026'
-heroImage: '../../../assets/gemini_1.jpg'
+heroImage: '../../../assets/i_20.jpg'
 ---
 
 **1. We comply with the Act on the Protection of Personal Information and related laws and regulations in World and engage in the appropriate acquisition, use and provision of personal information in accordance with the below disclosed Handling of Personal Information and internal regulations, etc.**
