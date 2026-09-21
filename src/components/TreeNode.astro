@@ -12,7 +12,7 @@ const { node } = Astro.props;
 <li class="tree-node">
     {
         node.isFolder ? (
-            <details open class="folder-details">
+            <details class="folder-details">
                 <summary class="folder-title">
                     <span class="icon">📁</span>
                     <span class="folder-name">{node.name}</span>
