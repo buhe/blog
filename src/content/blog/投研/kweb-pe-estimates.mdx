@@ -1,0 +1,54 @@
+---
+title: KWEB 前十大持仓加权 PE 估算
+---
+
+# KWEB 前十大持仓加权 PE 估算
+
+按当前 KWEB 权重（腾讯 10.3% / 阿里 8.5% / 拼多多 7.9% / 美团 6.9% / 百度 4.1% / 京东 4.1%）对当年有效正 PE 成分股重新归一化加权；负 PE 或极端异常年份按行业惯例剔除。
+
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceDot } from 'recharts';
+
+export const peData = [
+  { year: '2019', pe: 33.0, official: false, note: '仅腾讯+阿里有效数据' },
+  { year: '2020', pe: 24.6, official: false, note: '+百度、京东' },
+  { year: '2021', pe: 33.6, official: false, note: '+拼多多（60 倍高估值）' },
+  { year: '2022', pe: 27.2, official: false, note: '+京东（60 倍，盈利低基数）' },
+  { year: '2023', pe: 23.1, official: false, note: '+美团（34 倍）' },
+  { year: '2024', pe: 15.5, official: false, note: '全部 6 家有效' },
+  { year: '2026*', pe: 12.46, official: true, note: 'KWEB 官方 TTM（Yahoo 数据）' },
+];
+
+export function PeTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontSize: 13, boxShadow: '0 2px 8px rgba(0,0,0,.08)' }}>
+      <b>{d.year}</b>　PE ≈ {d.pe}
+      {d.official && <span style={{ marginLeft: 6, fontSize: 11, background: '#d97706', color: '#fff', borderRadius: 99, padding: '2px 8px' }}>官方 TTM</span>}
+      <div style={{ color: '#6b7280', fontSize: 12 }}>{d.note}</div>
+    </div>
+  );
+}
+
+<ResponsiveContainer width="100%" height={300}>
+  <LineChart data={peData} margin={{ top: 16, right: 24, bottom: 4, left: 0 }}>
+    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#6b7280' }} />
+    <YAxis domain={[8, 38]} tick={{ fontSize: 12, fill: '#6b7280' }} label={{ value: 'PE（倍）', angle: -90, position: 'insideLeft', fontSize: 12, fill: '#6b7280' }} />
+    <Tooltip content={<PeTooltip />} />
+    <Legend />
+    <Line type="monotone" dataKey="pe" name="加权 PE（倍）" stroke="#2563eb" strokeWidth={2} dot={{ r: 5, fill: '#2563eb' }} activeDot={{ r: 7 }} />
+  </LineChart>
+</ResponsiveContainer>
+
+| 年份 | 估算加权 PE | 说明 |
+|---|---|---|
+| 2019 | ~33.0 | 仅腾讯+阿里有效数据 |
+| 2020 | ~24.6 | +百度、京东 |
+| 2021 | ~33.6 | +拼多多（60 倍高估值） |
+| 2022 | ~27.2 | +京东（60 倍，盈利低基数） |
+| 2023 | ~23.1 | +美团（34 倍） |
+| 2024 | ~15.5 | 全部 6 家有效 |
+| 2026（实际）官方 | 12.46 | KWEB 官方 TTM（Yahoo 数据） |
+
+> **局限**：① 用**当前权重回溯历史**，非 KWEB 历史上真实动态权重，2013–2018 早期年份误差更大（故未纳入）；② 剔除了负 PE / 极端值年份（如百度 2019 PE -274、美团 2019 PE 234）；③ 仅作趋势参考，不适合精确历史分位数判断——精确序列需 YCharts 或 ETF Research Center 付费数据。估算值与 KWEB 官方当前 TTM 12.46 量级一致、走势方向一致（2021 监管高峰后持续压缩）。
