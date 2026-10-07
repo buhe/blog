@@ -20,8 +20,12 @@ const blogTree = buildBlogTree(allPosts);
 	<body>
 		<Header />
 		<main class="tree-container">
+			<div class="marquee" role="presentation">
+				<span>★ Welcome to my homepage ★ 欢迎光临 ★ Best viewed at 800×600 with Netscape Navigator ★ This site is under construction ★</span>
+			</div>
+
 			<header class="page-header">
-				<h1>📑 Outline</h1>
+				<h1>📁 Outline</h1>
 			</header>
 
 			<section class="tree-wrapper">
@@ -40,33 +44,28 @@ const blogTree = buildBlogTree(allPosts);
 		width: auto;
 		box-sizing: border-box;
 		max-width: 800px;
-		margin: 0 auto;
-		padding: 3rem 1.5rem;
-		font-family:
-			system-ui,
-			-apple-system,
-			sans-serif;
+		margin: 2em auto;
+		padding: 1.5rem;
+	}
+	.marquee {
+		margin-bottom: 1.5rem;
 	}
 	.page-header {
-		margin-bottom: 2rem;
-		border-bottom: 1px solid #edf2f7;
-		padding-bottom: 1rem;
+		margin-bottom: 1.5rem;
+		border-bottom: 2px groove var(--silver);
+		padding-bottom: 0.75rem;
 	}
 	.page-header h1 {
-		font-size: 1.8rem;
-		color: #1a202c;
-		margin: 0 0 0.5rem 0;
-	}
-	.page-header p {
-		color: #718096;
+		font-size: 1.5rem;
+		color: var(--navy);
 		margin: 0;
 	}
+	/* file-manager directory view: sunken white well */
 	.tree-wrapper {
-		background-color: #ffffff;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		padding: 1.5rem;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+		background: var(--white);
+		border: 2px solid;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+		padding: 1rem;
 	}
 	.root-tree {
 		padding: 0;
@@ -74,17 +73,14 @@ const blogTree = buildBlogTree(allPosts);
 	}
 	@media (max-width: 720px) {
 		.tree-container {
-			padding: 1.5rem 0.75rem;
+			margin: 1em auto;
+			padding: 1rem 0.75rem;
 		}
 		.page-header {
-			margin-bottom: 1.25rem;
+			margin-bottom: 1rem;
 		}
 		.page-header h1 {
-			font-size: 1.4rem;
-		}
-		.tree-wrapper {
-			padding: 1rem 0.75rem;
-			border-radius: 6px;
+			font-size: 1.25rem;
 		}
 	}
 </style>

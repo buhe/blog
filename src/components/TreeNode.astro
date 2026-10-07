@@ -44,25 +44,21 @@ const { node } = Astro.props;
 <style>
     .tree-node {
         list-style: none;
-        margin: 6px 0;
+        margin: 4px 0;
     }
     .folder-details {
         margin-left: 4px;
     }
-    .folder-details[open] > .folder-title {
-        border-radius: 4px;
-    }
     .folder-title {
         cursor: pointer;
-        font-weight: 600;
+        font-weight: bold;
         font-size: 1rem;
-        color: #2d3748;
+        color: #000;
         user-select: none;
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px;
-        border-radius: 4px;
+        padding: 6px 8px;
         min-height: 44px;
         box-sizing: border-box;
         list-style: none;
@@ -79,41 +75,36 @@ const { node } = Astro.props;
         content: "▾";
         margin-left: auto;
         font-size: 0.75rem;
-        color: #a0aec0;
-        transition: transform 0.15s ease;
+        color: var(--silver-dark);
     }
     .folder-details:not([open]) .folder-title::after {
         transform: rotate(-90deg);
     }
-    .folder-title:hover {
-        background-color: #f7fafc;
+    /* file-manager style highlight: navy bar, white text */
+    .folder-title:hover,
+    .file-link:hover {
+        background: var(--navy);
+        color: var(--white);
+    }
+    .file-link:hover .pub-date {
+        color: var(--silver);
     }
     .tree-children {
         list-style: none;
         padding-left: 1.25rem;
         margin: 4px 0 4px 8px;
-        border-left: 2px dashed #e2e8f0;
+        border-left: 2px dotted var(--silver-dark);
     }
     .file-link {
         display: flex;
         align-items: center;
         gap: 8px;
         text-decoration: none;
-        color: #4a5568;
+        color: #000;
         font-size: 0.95rem;
-        padding: 8px;
+        padding: 6px 8px;
         min-height: 44px;
         box-sizing: border-box;
-        border-radius: 4px;
-        transition: all 0.15s ease;
-    }
-    .file-link:hover {
-        background-color: #ebf8ff;
-        color: #3182ce;
-    }
-    .file-link:active,
-    .folder-title:active {
-        background-color: #ebf8ff;
     }
     .file-title {
         flex: 1;
@@ -121,8 +112,9 @@ const { node } = Astro.props;
         overflow-wrap: anywhere;
     }
     .pub-date {
+        font-family: 'Courier New', 'Courier', monospace;
         font-size: 0.8rem;
-        color: #a0aec0;
+        color: rgb(var(--gray));
         margin-left: 8px;
         white-space: nowrap;
         flex-shrink: 0;
