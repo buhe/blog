@@ -15,10 +15,26 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
 <style>
 	a {
 		display: inline-block;
+		padding: 2px 10px;
+		font-size: 13px;
+		color: #000;
 		text-decoration: none;
+		background: var(--silver);
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
 	}
+	a:hover {
+		color: var(--navy);
+	}
+	/* current page looks like a pressed-in button with the classic dither fill */
 	a.active {
-		font-weight: bolder;
-		text-decoration: underline;
+		font-weight: bold;
+		background:
+			conic-gradient(#dfdfdf 25%, #c0c0c0 0 50%, #dfdfdf 0 75%, #c0c0c0 0) 0 0 /
+			2px 2px;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	a.active:hover {
+		color: #000;
 	}
 </style>

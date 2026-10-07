@@ -14,7 +14,13 @@ const { node } = Astro.props;
         node.isFolder ? (
             <details class="folder-details">
                 <summary class="folder-title">
-                    <span class="icon">📁</span>
+                    <svg class="icon" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+                        <rect x="2" y="2" width="7" height="3" fill="#000"></rect>
+                        <rect x="3" y="3" width="5" height="1" fill="#fff3a8"></rect>
+                        <rect x="1" y="5" width="14" height="8" fill="#000"></rect>
+                        <rect x="2" y="6" width="12" height="5" fill="#ffd75e"></rect>
+                        <rect x="2" y="11" width="12" height="1" fill="#caa53a"></rect>
+                    </svg>
                     <span class="folder-name">{node.name}</span>
                 </summary>
                 <ul class="tree-children">
@@ -25,7 +31,14 @@ const { node } = Astro.props;
             </details>
         ) : (
             <a href={`/blog/${node.data.id}`} class="file-link">
-                <span class="icon">📄</span>
+                <svg class="icon" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true">
+                    <rect x="3" y="1" width="10" height="14" fill="#000"></rect>
+                    <rect x="4" y="2" width="8" height="12" fill="#fff"></rect>
+                    <rect x="5" y="4" width="6" height="1" fill="#000080"></rect>
+                    <rect x="5" y="6" width="6" height="1" fill="#808080"></rect>
+                    <rect x="5" y="8" width="6" height="1" fill="#808080"></rect>
+                    <rect x="5" y="10" width="4" height="1" fill="#808080"></rect>
+                </svg>
                 <span class="file-title">{node.name}</span>
                 {node.data.data.pubDate && (
                     <time class="pub-date">
@@ -44,30 +57,29 @@ const { node } = Astro.props;
 <style>
     .tree-node {
         list-style: none;
-        margin: 6px 0;
+        margin: 0;
     }
     .folder-details {
-        margin-left: 4px;
+        margin: 0;
     }
-    .folder-details[open] > .folder-title {
-        border-radius: 4px;
+    .folder-title,
+    .file-link {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 20px;
+        padding: 1px 4px;
+        font-size: 13px;
+        line-height: 1.4;
+        user-select: none;
     }
     .folder-title {
         cursor: pointer;
-        font-weight: 600;
-        font-size: 1rem;
-        color: #2d3748;
-        user-select: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px;
-        border-radius: 4px;
-        min-height: 44px;
-        box-sizing: border-box;
-        list-style: none;
+        font-weight: bold;
+        color: #000;
     }
-    .folder-name {
+    .folder-name,
+    .file-title {
         flex: 1;
         min-width: 0;
         overflow-wrap: anywhere;
@@ -75,66 +87,71 @@ const { node } = Astro.props;
     .folder-title::-webkit-details-marker {
         display: none;
     }
-    .folder-title::after {
-        content: "▾";
-        margin-left: auto;
-        font-size: 0.75rem;
-        color: #a0aec0;
-        transition: transform 0.15s ease;
+    .folder-title {
+        list-style: none;
     }
-    .folder-details:not([open]) .folder-title::after {
-        transform: rotate(-90deg);
+    /* classic +/- expand box */
+    .folder-title::before {
+        content: "+";
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 11px;
+        height: 11px;
+        flex-shrink: 0;
+        font-size: 10px;
+        font-weight: bold;
+        line-height: 1;
+        color: #000;
+        background: var(--silver);
+        border: 1px solid;
+        border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
     }
-    .folder-title:hover {
-        background-color: #f7fafc;
+    .folder-details[open] > .folder-title::before {
+        content: "−";
+        background: conic-gradient(
+            #dfdfdf 25%,
+            #c0c0c0 0 50%,
+            #dfdfdf 0 75%,
+            #c0c0c0 0
+        );
+        background-size: 2px 2px;
+    }
+    /* file-manager style highlight: navy bar, white text */
+    .folder-title:hover,
+    .file-link:hover {
+        background: var(--navy);
+        color: var(--white);
+    }
+    .file-link:hover .pub-date {
+        color: var(--silver);
+    }
+    .file-link {
+        text-decoration: none;
+        color: #000;
     }
     .tree-children {
         list-style: none;
-        padding-left: 1.25rem;
-        margin: 4px 0 4px 8px;
-        border-left: 2px dashed #e2e8f0;
-    }
-    .file-link {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        color: #4a5568;
-        font-size: 0.95rem;
-        padding: 8px;
-        min-height: 44px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        transition: all 0.15s ease;
-    }
-    .file-link:hover {
-        background-color: #ebf8ff;
-        color: #3182ce;
-    }
-    .file-link:active,
-    .folder-title:active {
-        background-color: #ebf8ff;
-    }
-    .file-title {
-        flex: 1;
-        min-width: 0;
-        overflow-wrap: anywhere;
+        padding-left: 12px;
+        margin: 0 0 0 8px;
+        border-left: 1px dotted var(--silver-dark);
     }
     .pub-date {
-        font-size: 0.8rem;
-        color: #a0aec0;
+        font-family: 'Courier New', 'Courier', monospace;
+        font-size: 11px;
+        color: rgb(var(--gray));
         margin-left: 8px;
         white-space: nowrap;
         flex-shrink: 0;
     }
     .icon {
-        font-size: 0.9rem;
         flex-shrink: 0;
+        margin-right: 2px;
     }
     @media (max-width: 720px) {
         .tree-children {
-            padding-left: 0.75rem;
-            margin-left: 4px;
+            padding-left: 10px;
+            margin-left: 5px;
         }
     }
 </style>

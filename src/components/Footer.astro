@@ -1,48 +1,135 @@
 ---
 const today = new Date();
+// playful deterministic "hit counter": grows a little every day since the site began
+const epoch = Date.UTC(2021, 7, 8); // first post era: Aug 8, 2021
+const visits = String(Math.floor((Date.now() - epoch) / 86400000) * 7 + 1336).padStart(7, '0');
 ---
 
 <footer>
-	&copy; {today.getFullYear()} buhe. All rights reserved.
-	<div class="social-links">
-		<a href="https://twitter.com/buhe1986" target="_blank">
-			<span class="sr-only">Follow buhe on Twitter</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/twitter"
-				><path
-					fill="currentColor"
-					d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
-				></path></svg
-			>
-		</a>
-		<a href="https://github.com/buhe" target="_blank">
-			<span class="sr-only">Go to GitHub repo</span>
-			<svg viewBox="0 0 16 16" aria-hidden="true" width="32" height="32" astro-icon="social/github"
-				><path
-					fill="currentColor"
-					d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"
-				></path></svg
-			>
-		</a>
+	<div class="retro-row">
+		You are visitor No. <span class="lcd">{visits}</span>
+		<span class="badge">800×600</span>
+		<span class="badge">16-BIT COLOR</span>
+		<span class="badge">MADE WITH ASTRO</span>
+	</div>
+	<div class="taskbar">
+		<span class="start" role="presentation">
+			<span class="flag" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+			Start
+		</span>
+		<span class="task-sep" aria-hidden="true"></span>
+		<span class="task-btn active" role="presentation">Buhe Blog - Microsoft Internet Explorer</span>
+		<span class="tray">
+			<span class="tray-icon" aria-hidden="true">🔊</span>
+			<span id="taskbar-clock">--:--</span>
+		</span>
 	</div>
 </footer>
+<script>
+	function tick() {
+		const el = document.getElementById('taskbar-clock');
+		if (el) el.textContent = new Date().toTimeString().slice(0, 5);
+	}
+	tick();
+	setInterval(tick, 15000);
+</script>
 <style>
 	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		background: transparent;
+		color: var(--silver-light);
 		text-align: center;
 	}
-	.social-links {
+	.retro-row {
 		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
 		justify-content: center;
-		gap: 1em;
-		margin-top: 1em;
+		gap: 6px;
+		font-size: 12px;
+		padding: 1.5em 1em 1.5em 1em;
 	}
-	.social-links a {
-		text-decoration: none;
-		color: rgb(var(--gray));
+	.taskbar {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 999;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		padding: 3px 4px;
+		background: var(--silver);
+		border-top: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
 	}
-	.social-links a:hover {
-		color: rgb(var(--gray-dark));
+	.start {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 8px;
+		font-size: 13px;
+		font-weight: bold;
+		color: #000;
+		background: var(--silver);
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+		cursor: default;
+	}
+	.start:active {
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	/* little 4-pane flag */
+	.flag {
+		display: inline-grid;
+		grid-template-columns: 5px 5px;
+		grid-auto-rows: 5px;
+		gap: 1px;
+	}
+	.flag i:nth-child(1) {
+		background: #ff0000;
+	}
+	.flag i:nth-child(2) {
+		background: #00a000;
+	}
+	.flag i:nth-child(3) {
+		background: #0000d0;
+	}
+	.flag i:nth-child(4) {
+		background: #ffc000;
+	}
+	.task-sep {
+		width: 2px;
+		align-self: stretch;
+		border-left: 1px solid var(--silver-dark);
+		border-right: 1px solid var(--white);
+	}
+	.task-btn {
+		display: inline-block;
+		max-width: 320px;
+		padding: 2px 8px;
+		font-size: 12px;
+		color: #000;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		background:
+			conic-gradient(#dfdfdf 25%, #c0c0c0 0 50%, #dfdfdf 0 75%, #c0c0c0 0) 0 0 /
+			2px 2px;
+		border: 2px solid;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	.tray {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 2px 8px;
+		font-size: 12px;
+		color: #000;
+		border: 2px solid;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	.tray-icon {
+		font-size: 11px;
 	}
 </style>
