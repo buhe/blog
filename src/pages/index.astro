@@ -19,68 +19,85 @@ const blogTree = buildBlogTree(allPosts);
 	</head>
 	<body>
 		<Header />
+		<!-- the Explorer window IS the main window, no nested chrome -->
 		<main class="tree-container">
-			<div class="marquee" role="presentation">
-				<span>★ Welcome to my homepage ★ 欢迎光临 ★ Best viewed at 800×600 with Netscape Navigator ★ This site is under construction ★</span>
+			<h1 class="sr-only">Outline</h1>
+			<div class="titlebar fm-title">
+				<span class="title-text">📁 Exploring - C:\blog\</span>
+				<span class="title-buttons" aria-hidden="true">
+					<span class="win-btn">_</span>
+					<span class="win-btn">□</span>
+					<span class="win-btn close">×</span>
+				</span>
 			</div>
-
-			<header class="page-header">
-				<h1>📁 Outline</h1>
-			</header>
-
-			<section class="tree-wrapper">
-				<ul class="root-tree">
-					{blogTree.map((node) => <TreeNode node={node} />)}
-				</ul>
-			</section>
+			<div class="fm-body">
+				<div class="marquee" role="presentation">
+					<span>★ Welcome to my homepage ★ 欢迎光临 ★ Best viewed at 800×600 with Netscape Navigator ★ This site is under construction ★</span>
+				</div>
+				<div class="tree-wrapper">
+					<ul class="root-tree">
+						{blogTree.map((node) => <TreeNode node={node} />)}
+					</ul>
+				</div>
+			</div>
+			<div class="fm-status">{allPosts.length} object(s)</div>
 		</main>
 		<Footer />
 	</body>
 </html>
 
 <style>
+	/* strip the global silver "window" look: this page IS one window already */
 	.tree-container {
-		/* override global `main { width: 720px }` which forces horizontal overflow on mobile */
 		width: auto;
 		box-sizing: border-box;
 		max-width: 800px;
-		margin: 2em auto;
-		padding: 1.5rem;
+		margin: 1.5em auto;
+		padding: 0;
+		background: transparent;
+		border: none;
+	}
+	.fm-title {
+		font-size: 13px;
+		margin: 0;
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+		border-bottom: none;
+	}
+	.fm-body {
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+		border-top: none;
+		background: var(--silver);
+		padding: 6px;
 	}
 	.marquee {
-		margin-bottom: 1.5rem;
+		margin-bottom: 6px;
 	}
-	.page-header {
-		margin-bottom: 1.5rem;
-		border-bottom: 2px groove var(--silver);
-		padding-bottom: 0.75rem;
-	}
-	.page-header h1 {
-		font-size: 1.5rem;
-		color: var(--navy);
-		margin: 0;
-	}
-	/* file-manager directory view: sunken white well */
+	/* directory view: sunken white well */
 	.tree-wrapper {
 		background: var(--white);
 		border: 2px solid;
 		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
-		padding: 1rem;
+		padding: 6px 8px;
+		overflow-x: auto;
 	}
 	.root-tree {
 		padding: 0;
 		margin: 0;
 	}
+	.fm-status {
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+		border-top: none;
+		padding: 2px 6px;
+		font-size: 12px;
+		color: #000;
+		background: var(--silver);
+	}
 	@media (max-width: 720px) {
 		.tree-container {
 			margin: 1em auto;
-			padding: 1rem 0.75rem;
-		}
-		.page-header {
-			margin-bottom: 1rem;
-		}
-		.page-header h1 {
-			font-size: 1.25rem;
 		}
 	}
 </style>

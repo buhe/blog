@@ -27,20 +27,31 @@
 /* ------- desktop & window chrome ------- */
 
 body {
+	/* Tahoma/MS Sans Serif for Latin, SimSun/Songti SC for CJK — the Windows 98 简体中文版 look */
 	font-family:
 		'Tahoma',
-		'Verdana',
 		'MS Sans Serif',
+		'SimSun',
+		'Songti SC',
+		'STSong',
 		'Geneva',
 		sans-serif;
 	margin: 0;
-	padding: 0 0 2em 0;
+	padding: 0 0 36px 0;
 	text-align: left;
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	color: #000;
-	background: var(--desktop);
-	font-size: 16px;
+	/* teal desktop with 1px dither texture */
+	background-color: #008080;
+	background-image: conic-gradient(
+		#007878 25%,
+		#008080 0 50%,
+		#007878 0 75%,
+		#008080 0
+	);
+	background-size: 2px 2px;
+	font-size: 15px;
 	line-height: 1.6;
 }
 
@@ -70,19 +81,19 @@ h6 {
 	font-weight: bold;
 }
 h1 {
-	font-size: 2em;
+	font-size: 1.8em;
 }
 h2 {
-	font-size: 1.6em;
+	font-size: 1.5em;
 }
 h3 {
-	font-size: 1.4em;
+	font-size: 1.3em;
 }
 h4 {
-	font-size: 1.2em;
+	font-size: 1.15em;
 }
 h5 {
-	font-size: 1.1em;
+	font-size: 1.05em;
 }
 h6 {
 	font-size: 1em;
@@ -262,6 +273,18 @@ html {
 	background: var(--white);
 	border: 2px solid;
 	border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+}
+
+/* classic 50% dither, used for pressed buttons/taskbar */
+.dither {
+	background-color: var(--silver);
+	background-image: conic-gradient(
+		#dfdfdf 25%,
+		#c0c0c0 0 50%,
+		#dfdfdf 0 75%,
+		#c0c0c0 0
+	);
+	background-size: 2px 2px;
 }
 
 /* classic 88x31-ish web badge */

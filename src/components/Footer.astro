@@ -12,11 +12,27 @@ const visits = String(Math.floor((Date.now() - epoch) / 86400000) * 7 + 1336).pa
 		<span class="badge">16-BIT COLOR</span>
 		<span class="badge">MADE WITH ASTRO</span>
 	</div>
-	<div class="statusbar">
-		<span class="status-field grow">Done</span>
-		<span class="status-field">&copy; {today.getFullYear()} buhe. All rights reserved.</span>
+	<div class="taskbar">
+		<span class="start" role="presentation">
+			<span class="flag" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+			Start
+		</span>
+		<span class="task-sep" aria-hidden="true"></span>
+		<span class="task-btn active" role="presentation">Buhe Blog - Microsoft Internet Explorer</span>
+		<span class="tray">
+			<span class="tray-icon" aria-hidden="true">🔊</span>
+			<span id="taskbar-clock">--:--</span>
+		</span>
 	</div>
 </footer>
+<script>
+	function tick() {
+		const el = document.getElementById('taskbar-clock');
+		if (el) el.textContent = new Date().toTimeString().slice(0, 5);
+	}
+	tick();
+	setInterval(tick, 15000);
+</script>
 <style>
 	footer {
 		background: transparent;
@@ -30,31 +46,90 @@ const visits = String(Math.floor((Date.now() - epoch) / 86400000) * 7 + 1336).pa
 		justify-content: center;
 		gap: 6px;
 		font-size: 12px;
-		padding: 1.5em 1em 1em 1em;
+		padding: 1.5em 1em 1.5em 1em;
 	}
-	.statusbar {
-		position: sticky;
+	.taskbar {
+		position: fixed;
+		left: 0;
+		right: 0;
 		bottom: 0;
+		z-index: 999;
 		display: flex;
+		align-items: center;
 		gap: 4px;
 		padding: 3px 4px;
 		background: var(--silver);
-		border-top: 1px solid var(--white);
-		box-shadow: 0 -1px 0 var(--silver-dark);
+		border-top: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
 	}
-	.status-field {
+	.start {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 8px;
+		font-size: 13px;
+		font-weight: bold;
+		color: #000;
+		background: var(--silver);
+		border: 2px solid;
+		border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+		cursor: default;
+	}
+	.start:active {
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	/* little 4-pane flag */
+	.flag {
+		display: inline-grid;
+		grid-template-columns: 5px 5px;
+		grid-auto-rows: 5px;
+		gap: 1px;
+	}
+	.flag i:nth-child(1) {
+		background: #ff0000;
+	}
+	.flag i:nth-child(2) {
+		background: #00a000;
+	}
+	.flag i:nth-child(3) {
+		background: #0000d0;
+	}
+	.flag i:nth-child(4) {
+		background: #ffc000;
+	}
+	.task-sep {
+		width: 2px;
+		align-self: stretch;
+		border-left: 1px solid var(--silver-dark);
+		border-right: 1px solid var(--white);
+	}
+	.task-btn {
 		display: inline-block;
+		max-width: 320px;
 		padding: 2px 8px;
 		font-size: 12px;
 		color: #000;
-		background: var(--silver);
-		border: 1px solid;
-		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		background:
+			conic-gradient(#dfdfdf 25%, #c0c0c0 0 50%, #dfdfdf 0 75%, #c0c0c0 0) 0 0 /
+			2px 2px;
+		border: 2px solid;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
 	}
-	.grow {
-		flex: 1;
+	.tray {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 2px 8px;
+		font-size: 12px;
+		color: #000;
+		border: 2px solid;
+		border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+	}
+	.tray-icon {
+		font-size: 11px;
 	}
 </style>
