@@ -1,0 +1,61 @@
+---
+title: 'OS 简单教程六'
+description: 'OS 简单教程六'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_28.jpg'
+---
+
+### **地址空间**
+虚拟化完 CPU 后，我们虚拟化内存。为什么虚拟化内存呢？
+- **之前应用使用物理内存，需要指定具体的地址，如 0x80400000 ，如果应用一个个执行还好，下一章会看到为了最大化 CPU 的利用率，应用往往是并行运行的，这就需要应用间线下协商。**
+- **如果每个应用都能通过地址访问物理内存，应用就可以为所欲为，为了安全也需要虚拟化。**
+虚拟化内存的本质是虚拟地址到物理地址的映射，每个应用的虚拟地址总和构成地址空间。
+- **每个应用认为自己独占地址空间那么大的内存**
+- **应用的地址空间从 0 开始，应用可以随便自己布局内存分布，不会影响别人**
+- **切换应用也要切换地址空间，包括应用和内核，所以 trap 的时候也要切换**
+我们来看地址空间的数据结构
+```plain text
+pub struct MemorySet {
+   page_table: PageTable,
+   areas: Vec<MapArea>,
+}
+```
+- **每个地址空间都有一个页表和若干逻辑段，页表是存储地址映射的数据结构，下节讲，单个页不好统一管理，逻辑段是一组功能相同的页的组合，用来统一管理页。**
+我们来看逻辑段的数据结构
+```plain text
+pub struct MapArea {
+   vpn_range: VPNRange,
+   data_frames: BTreeMap<VirtPageNum, FrameTracker>,
+   map_type: MapType,
+   map_perm: MapPermission,
+}
+```
+- **VPNRange 是一个虚拟页号的迭代器，保存了这个逻辑段下所有虚拟页号，从后面可以看到，等于所有的虚拟地址**
+- **data_frames 保存所有的物理帧，内核和应用不同，应用才给这个字段加物理帧，因为**
+	- **内核的内存一般不需要释放，常驻内存**
+	- **内核采用恒等分配(后面会解释)**
+- **map_type 指定该逻辑段的内存映射方式，到底是恒等还是映射**
+- **map_perm 权限，脱胎于页表项的 PTEFlags ，一般一个逻辑段的虚拟地址权限相同，所以该逻辑段的所有页表项的 PTEFlags 相同**
+一个应用对应一个地址空间，一个地址空间所有的映射关系都在一个页表中，页表有很多页表项，每一个都是一个映射，指定了应用一个页的映射关系。
+地址空间分为内核和应用，二者内存布局如下
+内核高 256G
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHIlzYWdErYeziadRUha1mgj4UqaSxq91tZtwISx0v99u1MMSbglSMpxr31Fze3GwdMdic1HjTN8jBaw/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+内核低 256G
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHIlzYWdErYeziadRUha1mgj4iamKJO9DIlH55gOFLGAdHy5r5Sb1DzKrV0XYyRo4eyicfLkbnVvfBAvg/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+应用
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHIlzYWdErYeziadRUha1mgj4fJ3wdtnbOWr1vtNSMvlqdEd0ECOs1PuH0lfC2zuKeptolsEm5Yib2eg/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+可以看到
+1. **内核把各个应用的内核栈放在内核地址空间，而 trap context 却放在应用地址空间，后面具体讲 trap 的时候会解释**
+2. **跳板是什么？后面具体讲 trap 的时候也会解释**
+3. **分别把代码、数据等都放在各自地址空间**
+4. **保护页没有映射关系，主要为了应对递归层数太多**
+### **附录：虚拟地址相关的数据结构(请一定要记住，很重要～)**
+- **页：每 4K 一个页**
+- **虚拟地址：应用访问的地址**
+- **物理地址：虚拟地址通过页表映射过的**
+- **虚拟页号：每 4K 一个页号**
+- **物理页号：每 4K 一个页号**
+- **物理帧：实际分配的物理内存**
+具体代码请参考 https://github.com/buhe/bugu/tree/6
+---
+图片来自 https://rcore-os.github.io/rCore-Tutorial-Book-v3/

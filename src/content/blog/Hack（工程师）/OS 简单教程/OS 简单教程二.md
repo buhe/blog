@@ -1,0 +1,253 @@
+---
+title: 'OS 简单教程二'
+description: 'OS 简单教程二'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_13.jpg'
+---
+
+## **准备运行环境**
+目标是在内核态打印 Hello OS ，首先要在裸机（bare metal）上构建一个运行环境,目前已知的工作：
+1. 交叉编译到 risc-v 平台
+2. 不依赖 rust 的标准库，因为我们自己学习开发操作系统嘛，没有标准库，标准库是依赖特定操作系统的
+3. 因为跳转到 `main` 是标准库做的，所以也去掉 `main` 函数
+为了完成 1 ，需要建立 .cargo/config ，内容是：
+```plain text
+[build]
+target = "riscv64gc-unknown-none-elf"
+```
+指定 build 的目标是 riscv64gc-unknown-none-elf，riscv64gc-unknown-none-elf 是什么？平台与目标三元组。
+对于一份用某种编程语言实现的应用程序源代码而言，编译器在将其通过编译、链接得到可执行文件的时候需要知道程序要在哪个 **平台** (Platform) 上运行。这里 **平台** 主要是指CPU类型、操作系统类型和标准运行时库的组合:
+- 如果用户态基于的内核不同，会导致系统调用接口不同或者语义不一致；
+- 如果底层硬件不同，对于硬件资源的访问方式会有差异。特别是 ISA 不同的话，对上提供的指令集和寄存器都不同。
+它们都会导致最终生成的可执行文件有很大不同。需要指出的是，某些编译器支持同一份源代码无需修改就可编译到多个不同的目标平台并在上面运行。这种情况下，源代码是 **跨平台** 的。而另一些编译器则已经预设好了一个固定的目标平台。
+我们可以通过 **目标三元组** (Target Triplet) 来描述一个目标平台。它一般包括 CPU 架构、CPU 厂商、操作系统和运行时库，它们确实都会控制可执行文件的生成。
+为了完成 2、3 ，在 main.rs 里需要声明
+```plain text
+#![no_std]
+#![no_main]
+```
+### **准备工作**
+在此之前，需要进行一些准备工作，我们使用 make 来构建我们的内核，在 os 目录下建立 Makefile ，内容是
+```plain text
+# Building
+TARGET := riscv64gc-unknown-none-elf
+MODE := release
+KERNEL_ELF := target/$(TARGET)/$(MODE)/os
+KERNEL_BIN := $(KERNEL_ELF).bin
+
+# Binutils
+OBJCOPY := rust-objcopy --binary-architecture=riscv64
+
+build: env $(KERNEL_BIN)
+
+env:
+(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
+cargo install cargo-binutils
+rustup component add rust-src
+rustup component add llvm-tools-preview
+
+$(KERNEL_BIN): kernel
+@$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
+
+kernel:
+@cargo build --release
+
+clean:
+@cargo clean
+
+.PHONY: build env kernel clean
+
+```
+简单介绍一下这个 Makefile ，env 阶段 build 依赖它，env 里安装了工具和我们要开发操作系统的对应平台。
+### **开始编译**
+运行 `make build` ，显示
+```plain text
+  Compiling os v0.1.0 (/Users/buhe/code/gitHub/buguOS/os)
+error: `#[panic_handler]` function required, but not found
+
+error: could not compile `os` due to previous error
+make: *** [kernel] Error 101
+```
+接下来需要提供 panic_handler ，因为去掉依赖标准库，所以要自己实现 panic_handler ，panic_handler 顾名思义是发生线程恐慌的时候的处理函数。建立 lang.rs ，内容是
+```plain text
+use core::panic::PanicInfo;
+
+#[panic_handler]
+fn panic(_: &PanicInfo) -> ! {
+   loop {
+
+  }
+}
+```
+然后在 main.rs 中引用，此时 main.rs 为
+```plain text
+#![no_std]
+#![no_main]
+
+mod lang;
+```
+再次运行 make build ，成功编译。
+编译成功是成功了，运行在 k210 上试试。在 Makefile 里添加
+```plain text
+# Run K210
+K210-SERIALPORT= /dev/tty.usbserial-35525425B50
+K210-BURNER = ../tools/kflash.py
+
+run: run-inner
+
+run-inner: build
+(which $(K210-BURNER)) || (cd .. && git clone https://github.com/sipeed/kflash.py.git && mv kflash.py tools)
+@cp $(BOOTLOADER) $(BOOTLOADER).copy
+@dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1
+@mv $(BOOTLOADER).copy $(KERNEL_BIN)
+@sudo chmod 777 $(K210-SERIALPORT)
+python3 $(K210-BURNER) -p $(K210-SERIALPORT) -b 1500000 $(KERNEL_BIN)
+python3 -m serial.tools.miniterm --eol LF --dtr 0 --rts 0 --filter direct $(K210-SERIALPORT) 115200
+
+```
+在此之前，需要 SBI 引导内核，SBI 和 BIOS 差不多，在机器态运行，负责引导内核。运行 make run 试试，对了在这之前先看看 k210 。
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHInbVQEVGyS7tk4onbkaaGOXHzxsKZ9EQhZn8EtFubodBp9AqOWQicXvj3C9a3RKjV5iaDicIkEtOqYw/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+SBI 和内核约定的启动地址是 0x80200000，我们没有指定，所以不可能成功运行，下面我们通过链接文件来指定
+```plain text
+OUTPUT_ARCH(riscv)
+ENTRY(_start)
+BASE_ADDRESS = 0x80020000;
+
+SECTIONS
+{
+  . = BASE_ADDRESS;
+  skernel = .;
+
+  stext = .;
+  .text : {
+      *(.text.entry1)
+      *(.text .text.*)
+  }
+
+  . = ALIGN(4K);
+  etext = .;
+  srodata = .;
+  .rodata : {
+      *(.rodata .rodata.*)
+      *(.srodata .srodata.*)
+  }
+
+  . = ALIGN(4K);
+  erodata = .;
+  sdata = .;
+  .data : {
+      *(.data .data.*)
+      *(.sdata .sdata.*)
+  }
+
+  . = ALIGN(4K);
+  edata = .;
+  .bss : {
+      *(.bss.stack)
+      sbss = .;
+      *(.bss .bss.*)
+      *(.sbss .sbss.*)
+  }
+
+  . = ALIGN(4K);
+  ebss = .;
+  ekernel = .;
+  bugu = .;
+
+  /DISCARD/ : {
+      *(.eh_frame)
+  }
+}
+```
+在 .cargo/config 中指定链接文件
+```plain text
+[target.riscv64gc-unknown-none-elf]
+rustflags = [
+    "-Clink-arg=-Tsrc/linker.ld", "-Cforce-frame-pointers=yes"
+]
+```
+可以看到链接文件中指明内核从 0x80020000 开始。再次运行，看不出效果，因为什么也没做啊，我们让它关机吧。
+### **实现关机**
+首先实现系统调用，系统调用可以从用户态到内核态，也可以从内核态到机器态。建立 scall_sbi/mod.rs ，内容是
+```plain text
+#[inline(always)]
+fn scall(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
+    let mut ret;
+    unsafe {
+        asm!("ecall",
+            in( "x10") arg0,
+            in("x11") arg1,
+            in ("x12") arg2,
+            in("x17") which,
+            lateout("x10") ret,
+            options(nostack)
+        );
+    }
+    ret
+}
+const SBI_SHUTDOWN: usize = 8;
+
+pub fn shutdown() -> ! {
+    scall(SBI_SHUTDOWN, 0, 0, 0);
+    panic!("It should shutdown!");
+}
+```
+解释一下：
+1. id 8 是 SBI 约定的
+2. System call 用汇编来精确控制，越底层控制力越强
+main.rs 的内容是
+```plain text
+#![feature(llvm_asm)]
+#![no_std]
+#![no_main]
+
+use scall_sbi::shutdown;
+
+mod lang;
+mod scall_sbi;
+
+#[no_mangle]
+extern "C" fn _start() {
+   shutdown();
+}
+```
+1. asm 是使用汇编
+2. _start 会生成一个符号 SBI 会去调用
+SBI 加载引导后会去调用 start 符号，内核接管后续，内核通过系统调用 SBI 关机。一切看起来很完美，可是。。
+还缺少 stack ，编译器在调用函数的时候需要 stack。建立 stack.asm 内容是
+```plain text
+   .section .text.entry1
+  .globl _start
+_start:
+   la sp, boot_stack_top
+   call rust_main
+
+   .section .bss.stack
+  .globl boot_stack
+boot_stack:
+   .space 4096 * 16
+  .globl boot_stack_top
+boot_stack_top:
+```
+main.rs 内容是
+```plain text
+#![feature(asm)]
+#![feature(global_asm)]
+#![no_std]
+#![no_main]
+
+use scall_sbi::shutdown;
+
+mod lang;
+mod scall_sbi;
+
+global_asm!(include_str!("stack.asm"));
+
+#[no_mangle]
+extern "C" fn rust_main() ->! {
+   shutdown();
+}
+```
+1. global_asm 引入汇编文件
+2. stack.asm 调用 rust_main ,stack.asm 建立 stack
+具体代码请参考 https://github.com/buhe/bugu/tree/0.1.0

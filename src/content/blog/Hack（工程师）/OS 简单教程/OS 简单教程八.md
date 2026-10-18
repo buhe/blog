@@ -1,0 +1,90 @@
+---
+title: 'OS 简单教程八'
+description: 'OS 简单教程八'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_32.jpg'
+---
+
+### **恒等分配**
+内核采用恒等分配，其实就是虚拟地址等于物理地址。内核还是从 0x80020000 开而不是 0 。这样的原因是一开始没有启用分页的时候我们还是访问物理地址，为了保证内核的内存访问是平滑过度的，恒等分配不用实际分配物理帧，只需要建立映射就可以，因为实际的物理帧就是内核本身。
+### **映射分配**
+应用采用映射分配，应用的地址空间从 0 开始，映射分配要实际分配物理帧，我们采用简单的栈式分配。
+```plain text
+trait FrameAllocator {
+   fn new() -> Self;
+   fn alloc(&mut self) -> Option<PhysPageNum>;
+   fn dealloc(&mut self, ppn: PhysPageNum);
+}
+
+pub struct StackFrameAllocator {
+   current: usize,
+   end: usize,
+   recycled: Vec<usize>,
+}
+
+impl StackFrameAllocator {
+   pub fn init(&mut self, l: PhysPageNum, r: PhysPageNum) {
+       self.current = l.0;
+       self.end = r.0;
+  }
+}
+impl FrameAllocator for StackFrameAllocator {
+   fn new() -> Self {
+       Self {
+           current: 0,
+           end: 0,
+           recycled: Vec::new(),
+      }
+  }
+   fn alloc(&mut self) -> Option<PhysPageNum> {
+       if let Some(ppn) = self.recycled.pop() {
+           Some(ppn.into())
+      } else {
+           if self.current == self.end {
+               None
+          } else {
+               self.current += 1;
+               Some((self.current - 1).into())
+          }
+      }
+  }
+   fn dealloc(&mut self, ppn: PhysPageNum) {
+       let ppn = ppn.0;
+       // validity check
+       if ppn >= self.current || self.recycled.iter().find(|&v| *v == ppn).is_some() {
+           panic!("Frame ppn={:#x} has not been allocated!", ppn);
+      }
+       // recycle
+       self.recycled.push(ppn);
+  }
+}
+
+type FrameAllocatorImpl = StackFrameAllocator;
+```
+还记得逻辑段么？逻辑段包含一系列虚拟地址，分配一个页如下
+```plain text
+pub fn map_one(&mut self, page_table: &mut PageTable, vpn: VirtPageNum) {
+       let ppn: PhysPageNum;
+       match self.map_type {
+           MapType::Identical => {
+               ppn = PhysPageNum(vpn.0);
+          }
+           MapType::Framed => {
+               let frame = frame_alloc().unwrap();
+               ppn = frame.ppn;
+               self.data_frames.insert(vpn, frame);
+          }
+      }
+       let pte_flags = PTEFlags::from_bits(self.map_perm.bits).unwrap();
+       page_table.map(vpn, ppn, pte_flags);
+  }
+```
+用 vpn_range 分配逻辑段的所有页。
+```plain text
+  pub fn map(&mut self, page_table: &mut PageTable) {
+       for vpn in self.vpn_range {
+           self.map_one(page_table, vpn);
+      }
+  }
+```
+具体代码请参考 https://github.com/buhe/bugu/tree/6

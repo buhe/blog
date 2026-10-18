@@ -1,0 +1,30 @@
+---
+title: 'OS 简单教程七'
+description: 'OS 简单教程七'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_19.jpg'
+---
+
+### **准备页表**
+内存怎么虚拟化，历史上经历了分应用 -\> 应用的具体段 -\> 两种方法结合 -\> 最后因为内、外内存碎片的原因我们采用了页表算法，实际上，x86的64位模式甚至不再支持分段，而是使用分页，这完全避免了碎片问题。因为页一般大小相同所以外碎片很少，页相对很小内碎片可以忽略不计。问题变成
+- **缩小页表占用的空间**
+- **访问内存的速度**
+所谓虚拟化内存就是虚拟内存，好像什么也没说，在访问内存前经过映射关系的一次变换，那映射关系就要保存起来。每一个应用的映射关系保存在内存中，这个数据结构就是页表，每一个映射关系是一个页表项。
+这些映射是内核做的，内核同时也是一个“应用”，也访问的是虚拟地址，好像套娃。。比如访问 0x1234 其实有一个映射是 0x1234 -\> 0x4321 ，实际的内存地址其实是 0x4321 ，而这个映射就在这个应用的页表里，这个映射是其中一个页表项。
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHKa5G7O8prf8SZFWsPM5UiaZ4fe3AIELaiaNgETokJUtSag1BgR0kPYS5fChH7BICh5Mdkn3ic48K6iaA/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+一个页现代操作系统都是 4k ,也就是说映射是以 4k 为单位的，后 12 位（4k 等于 2 的 12 次方）是偏移。前面的位数组成虚拟页号和物理页号，risc-v 有 39 和 48 两种标准，我们选择前者，也就是 虚拟页号有 39 - 12 = 27 位，也就是需要 2 的 27 方个映射关系。
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHKa5G7O8prf8SZFWsPM5UiaZtUBfIufXAJIYwnYTziaGYc6dgdLSmDhm818ldkdQaUnUIkQOO07voSw/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+一个映射关系叫页表项 8 字节，2 的 27 方个 8 字节很大。。所以我们采用多级页表的机制来减少内存，这样没使用的映射关系就不用分配物理内存。
+![](https://mmbiz.qpic.cn/mmbiz_jpg/35hmbg3BDHKa5G7O8prf8SZFWsPM5UiaZuXfbobodiav1ZjibhZX5ZRAJ1jn7gB6ZOOkNG3ZHZDppTt57zTicTRMdw/640?wx_fmt=jpeg&tp=wxpic&wxfrom=5&wx_lazy=1&wx_co=1)
+### **减少体积**
+上图是多级页表的工作方式，risc-v 三级页表如上图，虚拟内存的地址是 39 位
+- **最后 12 位是偏移量**
+- **头 27 位分成 3 部分，每 9 位为 512，其实是一个页 (4K) 的偏移 (每个页表项 8 字节 8 \*512 = 4096 为 4K 正好是一个页)。**
+- **每个页表项中有下一个物理页号，物理页偏移（还记得之前的 9 位）后，指向一个页表项。以此类推，最后一个页表项里的物理页号就是这个虚拟页号映射的物理页号，物理页号再加 12 位偏移量，就是物理地址。**
+### **加速**
+- **首先，上述操作都是硬件完成的，操作系统只是负责建立映射，因为页表是在内存上的，访问一个物理地址也需要 4 次内存操作**
+- **这就需要 TLB ，其实 TLB 就是一种 cache ，保存映射关系在 TLB 中，又因为程序通常符合局部性原理，所以一般多次访问可以复用 TLB 。**
+具体代码请参考 https://github.com/buhe/bugu/tree/6
+---
+- **页表本身是不受 mmu 管的，也就是不进行虚拟到物理映射，本身只是物理地址指定的。硬件访问它用物理地址。**
+- **图片来自 https://rcore-os.github.io/rCore-Tutorial-Book-v3/**

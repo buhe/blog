@@ -1,0 +1,130 @@
+---
+title: 'OS 简单教程三'
+description: 'OS 简单教程三'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_3.jpg'
+---
+
+## **打印**
+继续打印，幸好 SBI 实现了打印，省去了自己实现驱动，调用系统调用就行了。
+实现系统调用，在 scall_sbi/mod.rs 中
+```plain text
+#[inline(always)]
+fn scall(which: usize, arg0: usize, arg1: usize, arg2: usize) -> usize {
+   let mut ret;
+   unsafe {
+       asm!("ecall",
+           in( "x10") arg0,
+           in("x11") arg1,
+           in ("x12") arg2,
+           in("x17") which,
+           lateout("x10") ret,
+           options(nostack)
+      );
+  }
+   ret
+}
+const SBI_CONSOLE_PUTCHAR: usize = 1;
+const SBI_SHUTDOWN: usize = 8;
+
+pub fn shutdown() -> ! {
+   scall(SBI_SHUTDOWN, 0, 0, 0);
+   panic!("It should shutdown!");
+}
+
+pub fn put_char(c: usize) {
+   scall(SBI_CONSOLE_PUTCHAR, c, 0, 0);
+}
+```
+建立 console.rs 调用刚才的系统调用，内容是
+```plain text
+use core::fmt::{self, Write};
+
+use crate::scall_sbi::put_char;
+
+struct STDOUT;
+
+impl Write for STDOUT {
+   fn write_str(&mut self, s: &str) -> core::fmt::Result {
+       for c in s.chars() {
+           put_char(c as usize);
+      }
+       Ok(())
+  }
+}
+
+pub fn print(args: fmt::Arguments){
+   STDOUT.write_fmt(args).unwrap();
+}
+
+#[macro_export]
+macro_rules! print {
+  ($fmt: literal $(, $($arg: tt)+)?) => {
+      $crate::console::print(format_args!($fmt $(, $($arg)+)?));
+  }
+}
+
+#[macro_export]
+macro_rules! println {
+  ($fmt: literal $(, $($arg: tt)+)?) => {
+      $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
+  }
+}
+```
+说明一下
+- 利用 宏 + core:\:fmt\::Write 来解析参数
+main.rs 里就可以调用宏输出了，这时 main.rs 的内容
+```plain text
+#![feature(llvm_asm)]
+#![feature(global_asm)]
+#![no_std]
+#![no_main]
+
+use scall_sbi::shutdown;
+
+mod lang;
+mod scall_sbi;
+#[macro_use]
+mod console;
+
+global_asm!(include_str!("stack.asm"));
+
+#[no_mangle]
+extern "C" fn rust_main() ->! {
+   println!("hello OS");
+   shutdown();
+}
+```
+编译一下，make build，编译过了，运行一下 make run 也成功了，输出
+```plain text
+[rustsbi] RustSBI version 0.2.0-alpha.3
+.______       __   __     _______.___________. _______..______   __
+|   _ \     | | | |   /       |           | /       ||   _ \ | |
+| |_) |   | | | |   |   (----`---| |----`|   (----`| |_) || |
+|     /     | | | |   \   \       | |     \   \   |   _ < | |
+| |\ \----.| `--' |.----)   |     | | .----)   |   | |_) || |
+| _| `._____| \______/ |_______/       |__| |_______/   |______/ |__|
+
+[rustsbi] Platform: K210 (Version 0.2.0)
+[rustsbi] misa: RV64ACDFIMSU
+[rustsbi] mideleg: 0x22
+[rustsbi] medeleg: 0x1ab
+[rustsbi] Kernel entry: 0x80020000
+hello OS
+[rustsbi] reset triggered! todo: shutdown all harts on k210; program halt. Type: 0, reason: 0
+```
+至此我们成功准备了运行环境并在 k210 上输出，接下来我们开始虚拟化 CPU 和内存，这更有趣！
+### **后续**
+- 全局位初始化变量清零
+```plain text
+fn clear_bss() {
+   extern "C" {
+       fn sbss();
+       fn ebss();
+  }
+  (sbss as usize..ebss as usize).for_each(|a| {
+       unsafe { (a as *mut u8).write_volatile(0) }
+  });
+}
+```
+具体代码请参考 https://github.com/buhe/bugu/tree/0.1.0

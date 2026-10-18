@@ -1,0 +1,196 @@
+---
+title: 'OS 简单教程五'
+description: 'OS 简单教程五'
+pubDate: 'Mar 19 2024'
+heroImage: '../../../../assets/i_16.jpg'
+---
+
+### **添加堆支持**
+为了给虚拟化内存做准备，我们来支持堆，添加堆支持以后就可以使用 Vecor HashMap 等 rust 内建的数据结构，这些数据结构使用动态内存。
+### **Bump**
+简单的 Bump 堆内存分配器，下面我们就具体看看，BumpAllocator 也实现了 GlobalAlloc
+```plain text
+unsafe impl GlobalAlloc for Locked<BumpAllocator> {
+   unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+       let mut bump = self.lock(); // get a mutable reference
+
+       let alloc_start = align_up(bump.next, layout.align());
+       let alloc_end = alloc_start + layout.size();
+
+       if alloc_end > bump.heap_end {
+           ptr::null_mut() // out of memory
+      } else {
+           bump.next = alloc_end;
+           bump.allocations += 1;
+           alloc_start as *mut u8
+      }
+  }
+
+   unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
+       let mut bump = self.lock(); // get a mutable reference
+
+       bump.allocations -= 1;
+       if bump.allocations == 0 {
+           bump.next = bump.heap_start;
+      }
+  }
+}
+
+pub struct BumpAllocator {
+   heap_start: usize,
+   heap_end: usize,
+   next: usize,
+   allocations: usize,
+}
+
+impl BumpAllocator {
+   /// Creates a new empty bump allocator.
+   pub const fn new() -> Self {
+       BumpAllocator {
+           heap_start: 0,
+           heap_end: 0,
+           next: 0,
+           allocations: 0,
+      }
+  }
+
+   /// Initializes the bump allocator with the given heap bounds.
+   ///
+   /// This method is unsafe because the caller must ensure that the given
+   /// memory range is unused. Also, this method must be called only once.
+   pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
+       self.heap_start = heap_start;
+       self.heap_end = heap_start + heap_size;
+       self.next = heap_start;
+  }
+}
+
+fn align_up(addr: usize, align: usize) -> usize {
+   let remainder = addr % align;
+   if remainder == 0 {
+       addr // addr already aligned
+  } else {
+       addr - remainder + align
+  }
+}
+```
+- **next 指向已分配和未分配的边界，开始指向 heap_start 也就是内存开始的地方。**
+- **Bump 很简单，allocations 每次分配 +1 每次释放 -1 ，直到 =0 时 next 指向开始的位置，真实释放所有内存。**
+- **align_up 根据 layout.align() 来对齐。**
+最后初始化 Bump 分配器
+```plain text
+use bump::{BumpAllocator, Locked};
+
+#[global_allocator]
+static HEAP_ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+
+// #[global_allocator]
+// static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
+
+static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
+
+pub fn init() {
+   unsafe {
+       HEAP_ALLOCATOR
+          .lock()
+          .init(HEAP_SPACE.as_ptr() as usize, KERNEL_HEAP_SIZE);
+  }
+}
+```
+### **第三方库**
+也可以选择复杂但更成熟的第三方库，首先依赖 buddy_system_allocator
+```plain text
+buddy_system_allocator = "0.6"
+```
+我用别人写好的伙伴分配器做例子分配堆内存，代码实现起来很简单，也很容易理解。建立 heap/mod.rs 内容
+```plain text
+use buddy_system_allocator::LockedHeap;
+const KERNEL_HEAP_SIZE: usize = 0x30_0000;
+
+#[global_allocator]
+static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
+
+static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
+
+pub fn init() {
+   unsafe {
+       HEAP_ALLOCATOR
+          .lock()
+          .init(HEAP_SPACE.as_ptr() as usize, KERNEL_HEAP_SIZE);
+  }
+}
+
+#[alloc_error_handler]
+pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
+   panic!("Heap allocation error, layout = {:?}", layout);
+}
+```
+- **HEAP_ALLOCATOR 实现了堆分配的 trait ，建立一个 HEAP_ALLOCATOR 作为分配器**
+- **init 初始化一个数组来分配堆内存**
+- **handle_alloc_error 是分配失败的处理器**
+main.rs 里调用，如下
+```plain text
+#![feature(alloc_error_handler)]
+
+extern crate alloc;
+
+#[no_mangle]
+extern "C" fn rust_main() -> ! {
+   clear_bss();
+   heap::init();
+   heap::heap_test();
+   trap::init();
+   task::init();
+   task::run();
+}
+```
+- **#!\[feature(alloc_error_handler)\] 和 extern crate alloc; 包含分配器的 trait**
+- **heap::init() 初始化**
+最后使用 heap::heap_test() 测试测试～
+```plain text
+pub fn heap_test() {
+   use alloc::boxed::Box;
+   use alloc::vec::Vec;
+   extern "C" {
+       fn sbss();
+       fn ebss();
+  }
+   let bss_range = sbss as usize..ebss as usize;
+   let a = Box::new(5);
+   assert_eq!(*a, 5);
+   assert!(bss_range.contains(&(a.as_ref() as *const _ as usize)));
+   drop(a);
+   let mut v: Vec<usize> = Vec::new();
+   for i in 0..500 {
+       v.push(i);
+  }
+   for i in 0..500 {
+       assert_eq!(v[i], i);
+  }
+   assert!(bss_range.contains(&(v.as_ptr() as usize)));
+   drop(v);
+   println!("heap_test passed!");
+}
+```
+看看输出
+```plain text
+[rustsbi] RustSBI version 0.2.0-alpha.3
+.______       __   __     _______.___________. _______..______   __
+|   _ \     | | | |   /       |           | /       ||   _ \ | |
+| |_) |   | | | |   |   (----`---| |----`|   (----`| |_) || |
+|     /     | | | |   \   \       | |     \   \   |   _ < | |
+| |\ \----.| `--' |.----)   |     | | .----)   |   | |_) || |
+| _| `._____| \______/ |_______/       |__| |_______/   |______/ |__|
+
+[rustsbi] Platform: K210 (Version 0.2.0)
+[rustsbi] misa: RV64ACDFIMSU
+[rustsbi] mideleg: 0x22
+[rustsbi] medeleg: 0x1ab
+[rustsbi] Kernel entry: 0x80020000
+heap_test passed!
+[kernel] app_0 [0x8002c018, 0x8002c938)
+Hello OS from app
+[kernel] Application exited with code 0
+```
+打印 heap_test passed! ，说明分配成功了。
+具体代码请参考 https://github.com/buhe/bugu/tree/7
